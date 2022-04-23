@@ -1,58 +1,140 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
-  </div>
+  <v-container fluid>
+    <v-card class="mx-15">
+      <v-card-title class="justify-center font-weight-bold">
+        SIMPLE CRUD WITH VUEX
+      </v-card-title>
+      <v-divider class="mx-15"></v-divider>
+      <v-card-text>
+        <v-form ref="form" v-model="valid">
+          <v-row>
+            <v-col>
+              <v-text-field
+                label="Nama Item"
+                v-model="newItem.nama"
+                :rules="[rules.required]"
+              ></v-text-field>
+            </v-col>
+            <v-col>
+              <v-text-field
+                label="Merk"
+                v-model="newItem.merk"
+                :rules="[rules.required]"
+              ></v-text-field>
+            </v-col>
+            <v-col>
+              <v-text-field
+                label="Qty"
+                v-model="newItem.qty"
+                :rules="[rules.required]"
+                @keypress="isNumber($event)"
+              ></v-text-field>
+            </v-col>
+            <v-col>
+              <v-text-field
+                label="Harga"
+                v-model="newItem.harga"
+                :rules="[rules.required]"
+                @keypress="isNumber($event)"
+              ></v-text-field>
+            </v-col>
+            <v-col>
+              <v-btn color="error" icon :disabled="!valid" @click.prevent="add">
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-form>
+      </v-card-text>
+
+      <v-card-text class="mt-5">
+        <v-table>
+          <thead>
+            <tr>
+              <th class="text-subtitle-1 font-weight-bold black--text">No.</th>
+              <th class="text-subtitle-1 font-weight-bold black--text">
+                Nama Item
+              </th>
+              <th class="text-subtitle-1 font-weight-bold black--text">Merk</th>
+              <th class="text-subtitle-1 font-weight-bold black--text">Qty</th>
+              <th class="text-subtitle-1 font-weight-bold black--text">
+                Harga Satuan
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in dataItem" :key="index">
+              <td>{{ index + 1 }}</td>
+              <td>{{ item.nama }}</td>
+              <td>{{ item.merk }}</td>
+              <td>{{ item.qty }}</td>
+              <td>Rp. {{ moneyFormat(item.harga) }}</td>
+            </tr>
+          </tbody>
+        </v-table>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
-export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
-  }
-}
-</script>
+import { mapGetters, mapMutations } from "vuex";
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
+export default {
+  name: "HelloWorld",
+
+  data: () => ({
+    valid: false,
+    loading: false,
+    newItem: {
+      nama: "",
+      merk: "",
+      qty: "",
+      harga: "",
+    },
+    rules: {
+      required: (value) => !!value || "",
+    },
+  }),
+
+  computed: {
+    ...mapGetters({
+      dataItem: "addItem/listItem",
+    }),
+  },
+
+  methods: {
+    ...mapMutations({
+      additem: "addItem/insertItem",
+    }),
+
+    add() {
+      this.additem(this.newItem);
+      this.newItem = {
+        nama: "",
+        merk: "",
+        qty: "",
+        harga: "",
+      };
+    },
+
+    moneyFormat(val) {
+      return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    },
+
+    isNumber(evt) {
+      evt = evt ? evt : window.event;
+      var charCode = evt.which ? evt.which : evt.keyCode;
+      if (
+        charCode > 31 &&
+        (charCode < 48 || charCode > 57) &&
+        charCode !== 46
+      ) {
+        evt.preventDefault();
+      } else {
+        return true;
+      }
+    },
+  },
+};
+</script>
